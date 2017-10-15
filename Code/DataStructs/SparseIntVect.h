@@ -19,6 +19,10 @@
 #include <RDGeneral/StreamOps.h>
 #include <boost/cstdint.hpp>
 
+#include <Eigen/Sparse>
+
+using namespace Eigen;
+
 const int ci_SPARSEINTVECT_VERSION =
     0x0001;  //!< version number to use in pickles
 namespace RDKit {
@@ -26,6 +30,7 @@ namespace RDKit {
 template <typename IndexType>
 class SparseIntVect {
  public:
+  typedef SparseVector<int, ColMajor, IndexType> EigenVectorType;
   typedef std::map<IndexType, int> StorageType;
 
   SparseIntVect() : d_length(0){};
@@ -346,6 +351,19 @@ class SparseIntVect {
     initFromText(txt.c_str(), txt.length());
   }
 
+  EigenVectorType convertToEigenVector() {
+    typename StorageType::const_iterator iter;
+    EigenVectorType ev;
+    ev(d_length);
+
+    ev.reserve(d_data.size());
+    for (iter = d_data.begin(); iter != d_data.end(); ++iter) {
+      ev[iter->first] = iter->second;
+    }
+
+    return ev;
+  }
+
  private:
   IndexType d_length;
   StorageType d_data;
@@ -463,6 +481,22 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
     }
   }
 }
+
+template <typename IndexType>
+void calcWeightedVectParams(const SparseIntVect<IndexType> &v1,
+                            const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                            double &v1Sum, double &v2Sum, double &andSum) {
+  typename SparseIntVect<IndexType>::EigenVectorType ev1, ev2;
+  if (v1.getLength() != v2.getLength()) {
+    throw ValueErrorException("SparseIntVect size mismatch");
+  }
+  v1Sum = v2Sum = andSum = 0.0;
+  ev1 = v1.convertToEigenVector();
+  ev2 = v2.convertToEigenVector();
+  v1Sum = ev1.dot(wv);
+  v2Sum = ev2.dot(wv);
+  andSum = ev1.cwiseMin(ev2).dot(wv);
+}
 }
 
 template <typename IndexType>
@@ -510,6 +544,32 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
 }
 
 template <typename IndexType>
+double WeightedDiceSimilarity(const SparseIntVect<IndexType> &v1,
+                      const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                      bool returnDistance = false, double bounds = 0.0) {
+  RDUNUSED_PARAM(bounds);
+  if (v1.getLength() != v2.getLength()) {
+    throw ValueErrorException("SparseIntVect size mismatch");
+  }
+  double v1Sum = 0.0;
+  double v2Sum = 0.0;
+  double numer = 0.0;
+
+  calcWeightedVectParams(v1, v2, wv, v1Sum, v2Sum, numer);
+
+  double denom = v1Sum + v2Sum;
+  double sim;
+  if (fabs(denom) < 1e-6) {
+    sim = 0.0;
+  } else {
+    sim = 2. * numer / denom;
+  }
+  if (returnDistance) sim = 1. - sim;
+  // std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
+  return sim;
+}
+
+template <typename IndexType>
 double TverskySimilarity(const SparseIntVect<IndexType> &v1,
                          const SparseIntVect<IndexType> &v2, double a, double b,
                          bool returnDistance = false, double bounds = 0.0) {
@@ -537,10 +597,45 @@ double TverskySimilarity(const SparseIntVect<IndexType> &v1,
 }
 
 template <typename IndexType>
+double WeightedTverskySimilarity(const SparseIntVect<IndexType> &v1,
+                                 const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                                 double a, double b,
+                                 bool returnDistance = false, double bounds = 0.0) {
+  RDUNUSED_PARAM(bounds);
+  if (v1.getLength() != v2.getLength()) {
+    throw ValueErrorException("SparseIntVect size mismatch");
+  }
+  double v1Sum = 0.0;
+  double v2Sum = 0.0;
+  double andSum = 0.0;
+
+  calcWeightedVectParams(v1, v2, wv, v1Sum, v2Sum, andSum);
+
+  double denom = a * v1Sum + b * v2Sum + (1 - a - b) * andSum;
+  double sim;
+
+  if (fabs(denom) < 1e-6) {
+    sim = 0.0;
+  } else {
+    sim = andSum / denom;
+  }
+  if (returnDistance) sim = 1. - sim;
+  // std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
+  return sim;
+}
+
+template <typename IndexType>
 double TanimotoSimilarity(const SparseIntVect<IndexType> &v1,
                           const SparseIntVect<IndexType> &v2,
                           bool returnDistance = false, double bounds = 0.0) {
   return TverskySimilarity(v1, v2, 1.0, 1.0, returnDistance, bounds);
+}
+
+template <typename IndexType>
+double WeightedTanimotoSimilarity(const SparseIntVect<IndexType> &v1,
+                          const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                          bool returnDistance = false, double bounds = 0.0) {
+  return WeightedTverskySimilarity(v1, v2, wv, 1.0, 1.0, returnDistance, bounds);
 }
 }
 

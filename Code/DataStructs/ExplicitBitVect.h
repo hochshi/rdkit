@@ -15,6 +15,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include "BitVect.h"
+#include <Eigen/Dense>
 
 //! a class for bit vectors that are densely occupied
 /*!

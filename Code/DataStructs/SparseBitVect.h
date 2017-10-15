@@ -16,6 +16,7 @@
 using std::set;
 #include <iterator>
 #include <algorithm>
+#include <Eigen/Sparse>
 
 typedef set<int> IntSet;
 typedef IntSet::iterator IntSetIter;

@@ -167,6 +167,11 @@ struct sparseIntVec_wrapper {
         (python::args("siv1"), python::args("siv2"),
          python::args("returnDistance") = false, python::args("bounds") = 0.0),
         "return the Dice similarity between two vectors");
+    python::def(
+            "WeightedDiceSimilarity", &WeightedDiceSimilarity<IndexType>,
+            (python::args("siv1"), python::args("siv2"), python::args("esdv"),
+                    python::args("returnDistance") = false, python::args("bounds") = 0.0),
+            "return the Dice similarity between two vectors");
     python::def("BulkDiceSimilarity", &BulkDice<SparseIntVect<IndexType> >,
                 (python::args("v1"), python::args("v2"),
                  python::args("returnDistance") = false),
@@ -177,6 +182,11 @@ struct sparseIntVec_wrapper {
         (python::args("siv1"), python::args("siv2"),
          python::args("returnDistance") = false, python::args("bounds") = 0.0),
         "return the Tanimoto similarity between two vectors");
+    python::def(
+            "WeightedTanimotoSimilarity", &WeightedTanimotoSimilarity<IndexType>,
+            (python::args("siv1"), python::args("siv2"), python::args("esdv"),
+                    python::args("returnDistance") = false, python::args("bounds") = 0.0),
+            "return the Tanimoto similarity between two vectors");
     python::def("BulkTanimotoSimilarity",
                 &BulkTanimoto<SparseIntVect<IndexType> >,
                 (python::args("v1"), python::args("v2"),
@@ -187,6 +197,11 @@ struct sparseIntVec_wrapper {
                 (python::args("siv1"), python::args("siv2"), python::args("a"),
                  python::args("b"), python::args("returnDistance") = false,
                  python::args("bounds") = 0.0),
+                "return the Tversky similarity between two vectors");
+    python::def("TverskySimilarity", &WeightedTverskySimilarity<IndexType>,
+                (python::args("siv1"), python::args("siv2"), python::args("esdv"),
+                        python::args("a"), python::args("b"),
+                        python::args("returnDistance") = false, python::args("bounds") = 0.0),
                 "return the Tversky similarity between two vectors");
     python::def("BulkTverskySimilarity",
                 &BulkTversky<SparseIntVect<IndexType> >,

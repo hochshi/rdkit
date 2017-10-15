@@ -21,7 +21,9 @@
 
 #include <boost/lexical_cast.hpp>
 
+
 using namespace RDKit;
+using namespace Eigen;
 
 int getBitId(const char*& text, int format, int size, int curr) {
   PRECONDITION(text, "no text");
@@ -195,6 +197,48 @@ int NumOnBitsInCommon(const T1& bv1, const T2& bv2) {
 
 int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
   return static_cast<int>(((*bv1.dp_bits) & (*bv2.dp_bits)).count());
+}
+
+template <typename T1,typename T2>
+T1 ConvertToEigenVector(const T2 &bv1) {
+  T1 e_bv1(bv1.getNumBits());
+  IntVect v;
+
+  bv1.getOnBits(v);
+  for (IntVectIter it = v.begin(); it != v.end(); ++it) {
+    e_bv1.coeffRef(*it) = 1;
+  }
+  return e_bv1;
+}
+
+// In all these similarity metrics the notation is selected to be
+//   consistent with J.W. Raymond and P. Willett, JCAMD _16_ 59-71 (2002)
+// """ -------------------------------------------------------
+//
+//  WeightedTanimotoSimilarity(T1,T2, T3)
+//   returns the weighted Tanamoto similarity between T1 and T2, a double.
+//
+//  T1 and T2 should be the same length.
+//
+//  C++ Notes: T1 and T2 will be converted to Eigen vectors
+//
+//  Python Notes: T1 and T2 are BitVects.
+//
+// """ -------------------------------------------------------
+template <typename T1, typename T2, typename T3>
+double WeightedTanimotoSimilarity(const T1& bv1, const T2& bv2, const T3& wv) {
+  if (bv1.getNumBits() != bv2.getNumBits())
+    throw ValueErrorException("BitVects must be same length");
+  T3 e_bv1 = ConvertToEigenVector<T3, T1>(bv1);
+  T3 e_bv2 = ConvertToEigenVector<T3, T2> (bv2);
+
+  double x = e_bv1.cwiseProduct(e_bv2).dot(wv);
+  double y = e_bv1.dot(wv);
+  double z = e_bv2.dot(wv);
+  if ((y + z - x) == 0.0)
+    return 1.0;
+  else
+    return x / (y + z - x);
 }
 
 // In all these similarity metrics the notation is selected to be
@@ -686,6 +730,9 @@ void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps) {
   }
 }
 
+template double WeightedTanimotoSimilarity(const SparseBitVect& bv1,
+                                           const SparseBitVect& bv2,
+                                           const SparseVector<double>& wv);
 template double TanimotoSimilarity(const SparseBitVect& bv1,
                                    const SparseBitVect& bv2);
 template double TverskySimilarity(const SparseBitVect& bv1,
@@ -716,6 +763,7 @@ template double AllBitSimilarity(const SparseBitVect& bv1,
                                  const SparseBitVect& bv2);
 template int NumOnBitsInCommon(const SparseBitVect& bv1,
                                const SparseBitVect& bv2);
+template SparseVector<double> ConvertToEigenVector(const SparseBitVect& bv1);
 template IntVect OnBitsInCommon(const SparseBitVect& bv1,
                                 const SparseBitVect& bv2);
 template IntVect OffBitsInCommon(const SparseBitVect& bv1,
@@ -725,6 +773,9 @@ template DoubleVect OnBitProjSimilarity(const SparseBitVect& bv1,
 template DoubleVect OffBitProjSimilarity(const SparseBitVect& bv1,
                                          const SparseBitVect& bv2);
 
+template double WeightedTanimotoSimilarity(const ExplicitBitVect& bv1,
+                                           const ExplicitBitVect& bv2,
+                                           const VectorXd& wv);
 template double TanimotoSimilarity(const ExplicitBitVect& bv1,
                                    const ExplicitBitVect& bv2);
 template double TverskySimilarity(const ExplicitBitVect& bv1,
@@ -752,6 +803,7 @@ template double OnBitSimilarity(const ExplicitBitVect& bv1,
                                 const ExplicitBitVect& bv2);
 template int NumBitsInCommon(const ExplicitBitVect& bv1,
                              const ExplicitBitVect& bv2);
+template VectorXd ConvertToEigenVector(const ExplicitBitVect& bv1);
 template double AllBitSimilarity(const ExplicitBitVect& bv1,
                                  const ExplicitBitVect& bv2);
 template IntVect OnBitsInCommon(const ExplicitBitVect& bv1,

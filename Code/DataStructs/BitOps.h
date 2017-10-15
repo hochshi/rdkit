@@ -93,6 +93,14 @@ int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
 template <typename T1, typename T2>
 double TanimotoSimilarity(const T1& bv1, const T2& bv2);
 
+//! returns the Weighted Tanimoto similarity between two bit vects
+/*!
+  \return <tt>(bv1&bv2)_o / [bv1_o + bv2_o - (bv1&bv2)_o]</tt>
+*/
+template <typename T1, typename T2, typename T3>
+double WeightedTanimotoSimilarity(const T1& bv1, const T2& bv2, const T3& wv);
+
+
 //! returns the Cosine similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o / sqrt(bv1_o + bv2_o)</tt>

@@ -363,6 +363,18 @@ struct BitOps_wrapper {
           help.c_str());
     }
 
+    {
+      std::string help = "B((bv1&bv2)*wv) / (B(bv1*wv)+B(bv2*wv)-B((bv1&bv2)*wv)";
+      python::def("WeightedTanimotoSimilarity",
+                  (double (*)(const SBV &, const SBV &, const Eigen::SparseVector<double>&))WeightedTanimotoSimilarity,
+                  (python::args("bv1"), python::args("bv2"), python::args("wv")),
+                  help.c_str());
+      python::def("WeightedTanimotoSimilarity",
+                  (double (*)(const EBV &, const EBV &, const Eigen::VectorXd&))WeightedTanimotoSimilarity,
+                  (python::args("bv1"), python::args("bv2"), python::args("wv")),
+                  help.c_str());
+    }
+
     DBL_DEF(OnBitSimilarity, BulkOnBitSimilarity, "B(bv1&bv2) / B(bv1|bv2)");
     DBL_DEF(AllBitSimilarity, BulkAllBitSimilarity,
             "(B(bv1) - B(bv1^bv2)) / B(bv1)");
