@@ -21,6 +21,7 @@ rdkit_headers(base64.h
               SparseIntVect.h
               FPBReader.h
               MultiFPBReader.h
+              EigenTypes.h
               DEST DataStructs)
 
 rdkit_test(testDataStructs testDatastructs.cpp

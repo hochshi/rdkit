@@ -3,7 +3,7 @@
 //
 
 #include <boost/python.hpp>
-#include <boost/python/numeric.hpp>
+#include <boost/python/numpy.hpp>
 #define PY_ARRAY_UNIQUE_SYMBOL RD_array_API
 #include <numpy/arrayobject.h>
 

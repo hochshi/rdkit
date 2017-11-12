@@ -19,9 +19,10 @@
 #include <RDGeneral/StreamOps.h>
 #include <boost/cstdint.hpp>
 
-#include <Eigen/Sparse>
-
-using namespace Eigen;
+//#include <Eigen/Sparse>
+//
+//using namespace Eigen;
+#include "EigenTypes.h"
 
 const int ci_SPARSEINTVECT_VERSION =
     0x0001;  //!< version number to use in pickles
@@ -30,7 +31,7 @@ namespace RDKit {
 template <typename IndexType>
 class SparseIntVect {
  public:
-  typedef SparseVector<double, ColMajor, int64_t> EigenVectorType;
+//  typedef SparseVector<double, ColMajor, int64_t> EigenVectorType;
   typedef std::map<IndexType, int> StorageType;
 
   SparseIntVect() : d_length(0){};
@@ -351,13 +352,13 @@ class SparseIntVect {
     initFromText(txt.c_str(), txt.length());
   }
 
-  EigenVectorType convertToEigenVector() const {
+  SVectorXd convertToEigenVector() const {
     typename StorageType::const_iterator iter;
-    EigenVectorType ev(d_length);
+    SVectorXd ev(d_length, 1);
 
     ev.reserve(d_data.size());
     for (iter = d_data.begin(); iter != d_data.end(); ++iter) {
-      ev.insert(iter->first) = iter->second;
+      ev.insert(iter->first, 0) = iter->second;
     }
 
     return ev;
@@ -483,18 +484,18 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
 
 template <typename IndexType>
 void calcWeightedVectParams(const SparseIntVect<IndexType> &v1,
-                            const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                            const SparseIntVect<IndexType> &v2, const SVectorXd &wv,
                             double &v1Sum, double &v2Sum, double &andSum) {
-  typename SparseIntVect<IndexType>::EigenVectorType ev1, ev2;
+  SVectorXd ev1, ev2;
   if (v1.getLength() != v2.getLength()) {
     throw ValueErrorException("SparseIntVect size mismatch");
   }
   v1Sum = v2Sum = andSum = 0.0;
   ev1 = v1.convertToEigenVector();
   ev2 = v2.convertToEigenVector();
-  v1Sum = ev1.dot(wv);
-  v2Sum = ev2.dot(wv);
-  andSum = ev1.cwiseMin(ev2).dot(wv);
+  v1Sum = ev1.cwiseProduct(wv).sum();
+  v2Sum = ev2.cwiseProduct(wv).sum();
+  andSum = ev1.cwiseMin(ev2).cwiseProduct(wv).sum();
 }
 }
 
@@ -544,7 +545,7 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
 
 template <typename IndexType>
 double WeightedDiceSimilarity(const SparseIntVect<IndexType> &v1,
-                      const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                      const SparseIntVect<IndexType> &v2, const SVectorXd &wv,
                       bool returnDistance = false, double bounds = 0.0) {
   RDUNUSED_PARAM(bounds);
   if (v1.getLength() != v2.getLength()) {
@@ -597,7 +598,7 @@ double TverskySimilarity(const SparseIntVect<IndexType> &v1,
 
 template <typename IndexType>
 double WeightedTverskySimilarity(const SparseIntVect<IndexType> &v1,
-                                 const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                                 const SparseIntVect<IndexType> &v2, const SVectorXd &wv,
                                  double a, double b,
                                  bool returnDistance = false, double bounds = 0.0) {
   RDUNUSED_PARAM(bounds);
@@ -632,7 +633,7 @@ double TanimotoSimilarity(const SparseIntVect<IndexType> &v1,
 
 template <typename IndexType>
 double WeightedTanimotoSimilarity(const SparseIntVect<IndexType> &v1,
-                          const SparseIntVect<IndexType> &v2, const SparseVector<double> &wv,
+                          const SparseIntVect<IndexType> &v2, const SVectorXd &wv,
                           bool returnDistance = false, double bounds = 0.0) {
   return WeightedTverskySimilarity(v1, v2, wv, 1.0, 1.0, returnDistance, bounds);
 }

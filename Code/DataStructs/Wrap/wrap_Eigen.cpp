@@ -14,23 +14,23 @@
 #include <RDBoost/PySequenceHolder.h>
 
 #include <numpy/arrayobject.h>
-//#include <boost/python/numeric.hpp>
+//#include <boost/python/numpy.hpp>
 //#include <numpy/npy_common.h>
 //#include <RDBoost/import_array.h>
 //#include <RDBoost/pyint_api.h>
-#include <Eigen/SparseCore>
-
-
+//#include <Eigen/SparseCore>
 
 namespace python = boost::python;
-namespace eigen = Eigen;
+
+#include <DataStructs/EigenTypes.h>
+
 using namespace RDKit;
 
-typedef int64_t WEVIndex;
-typedef eigen::Matrix<double, eigen::Dynamic, 1> VectorXd;
-typedef eigen::SparseMatrix<double, eigen::ColMajor, WEVIndex> SVectorXd;
-typedef eigen::Map<VectorXd> MVectorXd;
-typedef eigen::Map<SVectorXd> MSVectorXd;
+//typedef int64_t WEVIndex;
+//typedef eigen::Matrix<double, eigen::Dynamic, 1> VectorXd;
+//typedef eigen::SparseMatrix<double, eigen::ColMajor, WEVIndex> SVectorXd;
+//typedef eigen::Map<VectorXd> MVectorXd;
+//typedef eigen::Map<SVectorXd> MSVectorXd;
 
 
 template <typename VectorType, typename MapType>

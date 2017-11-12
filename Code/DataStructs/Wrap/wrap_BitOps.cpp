@@ -12,8 +12,10 @@
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
+#include <DataStructs/EigenTypes.h>
 
 namespace python = boost::python;
+using namespace RDKit;
 
 SBV *ff1(const SBV &bv1, int factor = 2) {
   return FoldFingerprint(bv1, factor);
@@ -366,11 +368,13 @@ struct BitOps_wrapper {
     {
       std::string help = "B((bv1&bv2)*wv) / (B(bv1*wv)+B(bv2*wv)-B((bv1&bv2)*wv)";
       python::def("WeightedTanimotoSimilarity",
-                  (double (*)(const SBV &, const SBV &, const Eigen::SparseVector<double>&))WeightedTanimotoSimilarity,
+//                  (double (*)(const SBV &, const SBV &, const Eigen::SparseVector<double>&))WeightedTanimotoSimilarity,
+                  (double (*)(const SBV &, const SBV &, const SVectorXd&))WeightedTanimotoSimilarity,
                   (python::args("bv1"), python::args("bv2"), python::args("wv")),
                   help.c_str());
       python::def("WeightedTanimotoSimilarity",
-                  (double (*)(const EBV &, const EBV &, const Eigen::VectorXd&))WeightedTanimotoSimilarity,
+//                  (double (*)(const EBV &, const EBV &, const Eigen::VectorXd&))WeightedTanimotoSimilarity,
+                  (double (*)(const EBV &, const EBV &, const VectorXd&))WeightedTanimotoSimilarity,
                   (python::args("bv1"), python::args("bv2"), python::args("wv")),
                   help.c_str());
     }

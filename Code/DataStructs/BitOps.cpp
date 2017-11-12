@@ -10,6 +10,7 @@
 //
 #include "BitVects.h"
 #include "BitOps.h"
+#include "EigenTypes.h"
 #include <math.h>
 #include <string>
 #include <iostream>
@@ -18,12 +19,13 @@
 #include <RDGeneral/Exceptions.h>
 #include <sstream>
 #include <cstdlib>
-
 #include <boost/lexical_cast.hpp>
 
 
 using namespace RDKit;
-using namespace Eigen;
+//namespace eigen = Eigen;
+
+
 
 int getBitId(const char*& text, int format, int size, int curr) {
   PRECONDITION(text, "no text");
@@ -201,12 +203,12 @@ int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
 
 template <typename T1,typename T2>
 T1 ConvertToEigenVector(const T2 &bv1) {
-  T1 e_bv1(bv1.getNumBits());
+  T1 e_bv1(bv1.getNumBits(), 1);
   IntVect v;
 
   bv1.getOnBits(v);
   for (IntVectIter it = v.begin(); it != v.end(); ++it) {
-    e_bv1.coeffRef(*it) = 1;
+    e_bv1.coeffRef(*it, 0) = 1;
   }
   return e_bv1;
 }
@@ -232,9 +234,9 @@ double WeightedTanimotoSimilarity(const T1& bv1, const T2& bv2, const T3& wv) {
   T3 e_bv1 = ConvertToEigenVector<T3, T1>(bv1);
   T3 e_bv2 = ConvertToEigenVector<T3, T2> (bv2);
 
-  double x = e_bv1.cwiseProduct(e_bv2).dot(wv);
-  double y = e_bv1.dot(wv);
-  double z = e_bv2.dot(wv);
+  double x = e_bv1.cwiseProduct(e_bv2).cwiseProduct(wv).sum();
+  double y = e_bv1.cwiseProduct(wv).sum();
+  double z = e_bv2.cwiseProduct(wv).sum();
   if ((y + z - x) == 0.0)
     return 1.0;
   else
@@ -731,8 +733,8 @@ void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps) {
 }
 
 template double WeightedTanimotoSimilarity(const SparseBitVect& bv1,
-                                           const SparseBitVect& bv2,
-                                           const SparseVector<double>& wv);
+                                           const SparseBitVect& bv2, const SVectorXd& sv);
+//                                           const SparseVector<double>& wv);
 template double TanimotoSimilarity(const SparseBitVect& bv1,
                                    const SparseBitVect& bv2);
 template double TverskySimilarity(const SparseBitVect& bv1,
@@ -763,7 +765,7 @@ template double AllBitSimilarity(const SparseBitVect& bv1,
                                  const SparseBitVect& bv2);
 template int NumOnBitsInCommon(const SparseBitVect& bv1,
                                const SparseBitVect& bv2);
-template SparseVector<double> ConvertToEigenVector(const SparseBitVect& bv1);
+template SVectorXd ConvertToEigenVector(const SparseBitVect& bv1);
 template IntVect OnBitsInCommon(const SparseBitVect& bv1,
                                 const SparseBitVect& bv2);
 template IntVect OffBitsInCommon(const SparseBitVect& bv1,
