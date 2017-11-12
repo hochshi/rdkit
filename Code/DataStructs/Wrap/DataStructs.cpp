@@ -22,6 +22,7 @@
 #include <RDBoost/import_array.h>
 #include <RDBoost/pyint_api.h>
 
+
 namespace python = boost::python;
 
 void wrap_SBV();
@@ -31,6 +32,8 @@ void wrap_Utils();
 void wrap_discreteValVect();
 void wrap_sparseIntVect();
 void wrap_FPB();
+
+void wrap_eigen();
 
 template <typename T>
 void convertToNumpyArray(const T &v, python::object destArray) {
@@ -75,6 +78,8 @@ BOOST_PYTHON_MODULE(cDataStructs) {
   wrap_discreteValVect();
   wrap_sparseIntVect();
   wrap_FPB();
+
+  wrap_eigen();
 
   python::def(
       "ConvertToNumpyArray",

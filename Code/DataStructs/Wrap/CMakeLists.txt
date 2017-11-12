@@ -1,5 +1,5 @@
 rdkit_python_extension(cDataStructs
-                       DataStructs.cpp DiscreteValueVect.cpp SparseIntVect.cpp
+                       DataStructs.cpp DiscreteValueVect.cpp SparseIntVect.cpp wrap_Eigen.cpp
                        wrap_SparseBV.cpp wrap_ExplicitBV.cpp wrap_BitOps.cpp
                        wrap_FPB.cpp
                        wrap_Utils.cpp

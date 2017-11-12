@@ -30,7 +30,7 @@ namespace RDKit {
 template <typename IndexType>
 class SparseIntVect {
  public:
-  typedef SparseVector<int, ColMajor, IndexType> EigenVectorType;
+  typedef SparseVector<double, ColMajor, int64_t> EigenVectorType;
   typedef std::map<IndexType, int> StorageType;
 
   SparseIntVect() : d_length(0){};
@@ -351,14 +351,13 @@ class SparseIntVect {
     initFromText(txt.c_str(), txt.length());
   }
 
-  EigenVectorType convertToEigenVector() {
+  EigenVectorType convertToEigenVector() const {
     typename StorageType::const_iterator iter;
-    EigenVectorType ev;
-    ev(d_length);
+    EigenVectorType ev(d_length);
 
     ev.reserve(d_data.size());
     for (iter = d_data.begin(); iter != d_data.end(); ++iter) {
-      ev[iter->first] = iter->second;
+      ev.insert(iter->first) = iter->second;
     }
 
     return ev;
