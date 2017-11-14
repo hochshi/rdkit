@@ -732,9 +732,9 @@ void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps) {
   }
 }
 
-template double WeightedTanimotoSimilarity(const SparseBitVect& bv1,
+template double WeightedTanimotoSimilarity<SparseBitVect, SparseBitVect, SVectorXd>(const SparseBitVect& bv1,
                                            const SparseBitVect& bv2, const SVectorXd& sv);
-//                                           const SparseVector<double>& wv);
+                                           //const SparseBitVect& bv2, const SVectorXd& sv);
 template double TanimotoSimilarity(const SparseBitVect& bv1,
                                    const SparseBitVect& bv2);
 template double TverskySimilarity(const SparseBitVect& bv1,
@@ -775,9 +775,10 @@ template DoubleVect OnBitProjSimilarity(const SparseBitVect& bv1,
 template DoubleVect OffBitProjSimilarity(const SparseBitVect& bv1,
                                          const SparseBitVect& bv2);
 
-template double WeightedTanimotoSimilarity(const ExplicitBitVect& bv1,
+template double WeightedTanimotoSimilarity<ExplicitBitVect, ExplicitBitVect, VectorXd>(const ExplicitBitVect& bv1,
                                            const ExplicitBitVect& bv2,
                                            const VectorXd& wv);
+                                           //const VectorXd& wv);
 template double TanimotoSimilarity(const ExplicitBitVect& bv1,
                                    const ExplicitBitVect& bv2);
 template double TverskySimilarity(const ExplicitBitVect& bv1,

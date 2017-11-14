@@ -160,8 +160,12 @@ struct sparseIntVec_wrapper {
              "update the vector based on the values in the list or tuple")
         .def("GetNonzeroElements", &pyGetNonzeroElements<IndexType>,
              "returns a dictionary of the nonzero elements")
-        .def_pickle(siv_pickle_suite<IndexType>());
+        .def_pickle(siv_pickle_suite<IndexType>())
+        .def("convertToEigenVector", &SparseIntVect<IndexType>::convertToEigenVector)
+        ;
 
+    python::def("calcWeightedVectParams", &calcWeightedVectParams<IndexType>,
+        (python::args("siv1"), python::args("siv2"), python::args("wv"), python::args("v1Sum"), python::args("v2Sum"), python::args("andSum")));
     python::def(
         "DiceSimilarity", &DiceSimilarity<IndexType>,
         (python::args("siv1"), python::args("siv2"),

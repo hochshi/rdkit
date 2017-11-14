@@ -3,7 +3,7 @@
 //
 
 #include <RDBoost/python.h>
-#include <RDBoost/Wrap.h>
+//#include <RDBoost/Wrap.h>
 
 //#include <RDGeneral/BoostStartInclude.h>
 //#include <boost/cstdint.hpp>
@@ -20,7 +20,7 @@
 //#include <RDBoost/pyint_api.h>
 //#include <Eigen/SparseCore>
 
-namespace python = boost::python;
+//namespace python = boost::python;
 
 #include <DataStructs/EigenTypes.h>
 
@@ -39,7 +39,34 @@ public:
   VectorHelper() {};
   ~VectorHelper() {};
 
+  static VectorType * Create() {
+    return new VectorType();
+  }
 
+  static void Map(VectorXd& vec , python::object toMap, WEVIndex size) {
+    Py_Initialize();
+    PyArrayObject *toMapP = (PyArrayObject *)toMap.ptr();
+    double *toMapData = (double *) PyArray_DATA(toMapP);
+    vec.resize(size, 1);
+    for (WEVIndex i=0; i < size; i++ ) {
+      vec.coeffRef(i, 0) = toMapData[i];
+    }
+  }
+
+  static void SparseMap(SVectorXd& vec, python::object  innerIndices, python::object values, WEVIndex size) {
+    Py_Initialize();
+    PyArrayObject *innerIndicesP = (PyArrayObject *)innerIndices.ptr();
+    PyArrayObject *valuesP = (PyArrayObject *)values.ptr();
+    WEVIndex *rowPos = (WEVIndex *) PyArray_DATA(innerIndicesP);
+    double *valuesData = (double *) PyArray_DATA(valuesP);
+    vec.resize(size, 1);
+    vec.reserve(size);
+    for (WEVIndex i=0; i<size; i++) {
+      vec.insert(rowPos[i],0) = valuesData[i];
+    }
+  }
+
+/*
   static MapType * Map(python::object toMap, WEVIndex m) {
     Py_Initialize();
     PyArrayObject *toMapP = (PyArrayObject *)toMap.ptr();
@@ -62,6 +89,7 @@ public:
                           (double *) PyArray_DATA(valuesP));
 //    return mapVec.derived();
   }
+*/
 
 //  static void resize(VectorType& self, WEVIndex size) { self.resize(size, 0); }
   static double dot(const MapType& self, const MapType& other){ return self.cwiseProduct(other).sum(); }
@@ -78,18 +106,18 @@ public:
   static VectorType __sub__(const MapType& a, const MapType& b){ return a-b; }
   static VectorType __iadd__(MapType& a, const MapType& b){ a+=b; return a; };
   static VectorType __isub__(MapType& a, const MapType& b){ a-=b; return a; };
-  static VectorType __mulScalar(const MapType& a, const MapType& b){ return a*b; }
-  static VectorType __mul(MapType& a, const double b){ return a*b;}
+  static VectorType __mul(const MapType& a, const MapType& b){ return a.cwiseProduct(b); }
+  static VectorType __mulVec(const MapType& a, const VectorType& b){ return a.cwiseProduct(b); }
+  static VectorType __mulScalar(MapType& a, const double b){ return a*b;}
 
 };
 
 
 using namespace boost::python;
-using namespace boost;
 template <typename VectorType, typename MapType>
 static void wrapOne(const char *className) {
 
-  class_<MapType, shared_ptr<MapType>>(className, "Eigen dense vectorXd", no_init)
+  class_<MapType, boost::shared_ptr<MapType> >(className, "Eigen dense vectorXd", no_init)
 //  class_<VectorType>(className, "Eigen dense vectorXd", no_init)
 //      .def("resize", &VectorHelper<MVectorType, VectorType>::resize, python::arg("size"))
       .def("__len__", &VectorHelper<VectorType, MapType>::size)
@@ -111,39 +139,65 @@ static void wrapOne(const char *className) {
 //      .def("__isub__", &VectorHelper<VectorType, MapType>::__isub__)
       .def("__mul__", &VectorHelper<VectorType, MapType>::__mul)
       .def("__mul__", &VectorHelper<VectorType, MapType>::__mulScalar)
+      .def("__mul__", &VectorHelper<VectorType, MapType>::__mulVec)
       ;
 }
 
 template <typename VectorType, typename MapType>
-typename boost::enable_if<std::is_same<MapType, MVectorXd>, VectorType>::type
-static wrapMap(const char *className) {
+static void wrapMap(const char *className){};
+
+//typename boost::enable_if<boost::is_same<MapType, MVectorXd>, VectorType>::type
+template <>
+void wrapMap<VectorXd, MVectorXd>(const char *className) {
 
   char helperName[80];
 
   strcpy(helperName, className);
   strcat(helperName, "Helper");
 
-  class_<VectorHelper<VectorType, MapType>>(helperName)
-      .def("Map", &VectorHelper<VectorType, MapType>::Map,
+  class_<VectorHelper<VectorXd, MVectorXd> >(helperName)
+      .def("Map", &VectorHelper<VectorXd, MVectorXd>::Map,
+           (python::args("vec"), python::args("toMap"), python::args("size")))
+      .staticmethod("Map")
+      .def("Create", &VectorHelper<SVectorXd, MSVectorXd>::Create,
+           python::return_value_policy<python::manage_new_object>())
+      .staticmethod("Create")
+      ;
+
+/*
+  class_<VectorHelper<VectorXd, MVectorXd> >(helperName)
+      .def("Map", &VectorHelper<VectorXd, MVectorXd>::Map,
            (python::args("toMap"), python::args("m")),
            python::return_value_policy<python::manage_new_object>())
       .staticmethod("Map")
       ;
-
+*/
 //  wrapOne<VectorType>(className);
 }
 
-template <typename VectorType, typename MapType>
-typename boost::enable_if<std::is_same<MapType, MSVectorXd>, VectorType>::type
-static wrapMap(const char *className) {
+//template <typename VectorType, typename MapType>
+//typename boost::enable_if<boost::is_same<MapType, MSVectorXd>, VectorType>::type
+template <>
+void wrapMap<SVectorXd, MSVectorXd>(const char *className) {
 
   char helperName[80];
 
   strcpy(helperName, className);
   strcat(helperName, "Helper");
 
-  class_<VectorHelper<VectorType, MapType>>(helperName)
-      .def("Map", &VectorHelper<VectorType, MapType>::SparseMap,
+  class_<VectorHelper<SVectorXd, MSVectorXd> >(helperName)
+      .def("Map", &VectorHelper<SVectorXd, MSVectorXd>::SparseMap,
+           (python::args("vec"), python::args("innerIndices"),
+               python::args("values"),
+               python::args("size")))
+      .staticmethod("Map")
+      .def("Create", &VectorHelper<SVectorXd, MSVectorXd>::Create,
+           python::return_value_policy<python::manage_new_object>())
+      .staticmethod("Create")
+      ;
+/*
+  class_<VectorHelper<SVectorXd, MSVectorXd> >(helperName)
+      .def("Map", &VectorHelper<SVectorXd, MSVectorXd>::SparseMap,
            (python::args("size"), python::args("nnz"),
                python::args("outerIndices"),
                python::args("innerIndices"),
@@ -152,6 +206,7 @@ static wrapMap(const char *className) {
            "Must be called with: total size, nnz, column position array ([0,size]) as int64, row position array as in64 and values as double")
       .staticmethod("Map")
       ;
+*/
 //  wrapOne<VectorType>(className);
 }
 
