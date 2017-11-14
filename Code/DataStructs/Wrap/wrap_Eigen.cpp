@@ -159,7 +159,7 @@ void wrapMap<VectorXd, MVectorXd>(const char *className) {
       .def("Map", &VectorHelper<VectorXd, MVectorXd>::Map,
            (python::args("vec"), python::args("toMap"), python::args("size")))
       .staticmethod("Map")
-      .def("Create", &VectorHelper<SVectorXd, MSVectorXd>::Create,
+      .def("Create", &VectorHelper<VectorXd, MVectorXd>::Create,
            python::return_value_policy<python::manage_new_object>())
       .staticmethod("Create")
       ;
