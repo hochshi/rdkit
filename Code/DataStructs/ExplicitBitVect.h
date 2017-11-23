@@ -15,7 +15,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include "BitVect.h"
-#include <Eigen/Dense>
+//#include <Eigen/Dense>
+#include "EigenTypes.h"
 
 //! a class for bit vectors that are densely occupied
 /*!
@@ -73,6 +74,8 @@ class ExplicitBitVect : public BitVect {
   unsigned int getNumOffBits() const;
 
   void getOnBits(IntVect &v) const;
+
+  RDKit::VectorXd convertToEigenVector() const;
 
   void clearBits() { dp_bits->reset(); };
   std::string toString() const;

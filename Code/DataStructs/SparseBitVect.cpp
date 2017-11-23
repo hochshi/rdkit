@@ -271,6 +271,16 @@ void SparseBitVect::getOnBits(IntVect &v) const {
   std::copy(dp_bits->begin(), dp_bits->end(), v.begin());
 };
 
+RDKit::SVectorXd SparseBitVect::convertToEigenVector() const {
+  RDKit::WEVIndex size  = (RDKit::WEVIndex) getNumOnBits();
+  RDKit::SVectorXd ev(size, 1);
+
+  for (auto it = dp_bits->begin(); it != dp_bits->end(); ++it) {
+    ev.coeffRef(*it, 0) = 1.0;
+  }
+  return ev;
+}
+
 // """ -------------------------------------------------------
 //
 // toString()
@@ -322,3 +332,4 @@ void SparseBitVect::_initForSize(unsigned int size) {
   delete dp_bits;
   dp_bits = new IntSet;
 };
+

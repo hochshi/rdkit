@@ -175,6 +175,17 @@ void ExplicitBitVect::getOnBits(IntVect &v) const {
   }
 };
 
+RDKit::VectorXd ExplicitBitVect::convertToEigenVector() const {
+  RDKit::WEVIndex size  = (RDKit::WEVIndex) d_size;
+  RDKit::VectorXd ev = RDKit::VectorXd::Zero(size, 1);
+
+  for (unsigned int i = 0; i < d_size; i++) {
+    if ((bool)(*dp_bits)[i]) ev.coeffRef(i, 0) = 1.0;
+  }
+
+  return ev;
+}
+
 void ExplicitBitVect::_initForSize(unsigned int size) {
   d_size = size;
   delete dp_bits;

@@ -201,6 +201,7 @@ int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
   return static_cast<int>(((*bv1.dp_bits) & (*bv2.dp_bits)).count());
 }
 
+/*
 template <typename T1,typename T2>
 T1 ConvertToEigenVector(const T2 &bv1) {
   T1 e_bv1(bv1.getNumBits(), 1);
@@ -212,6 +213,7 @@ T1 ConvertToEigenVector(const T2 &bv1) {
   }
   return e_bv1;
 }
+*/
 
 // In all these similarity metrics the notation is selected to be
 //   consistent with J.W. Raymond and P. Willett, JCAMD _16_ 59-71 (2002)
@@ -231,8 +233,11 @@ template <typename T1, typename T2, typename T3>
 double WeightedTanimotoSimilarity(const T1& bv1, const T2& bv2, const T3& wv) {
   if (bv1.getNumBits() != bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
-  T3 e_bv1 = ConvertToEigenVector<T3, T1>(bv1);
-  T3 e_bv2 = ConvertToEigenVector<T3, T2> (bv2);
+//  T3 e_bv1 = ConvertToEigenVector<T3, T1>(bv1);
+//  T3 e_bv2 = ConvertToEigenVector<T3, T2> (bv2);
+
+  T3 e_bv1 = bv1.convertToEigenVector();
+  T3 e_bv2 = bv2.convertToEigenVector();
 
   double x = e_bv1.cwiseProduct(e_bv2).cwiseProduct(wv).sum();
   double y = e_bv1.cwiseProduct(wv).sum();
@@ -765,7 +770,7 @@ template double AllBitSimilarity(const SparseBitVect& bv1,
                                  const SparseBitVect& bv2);
 template int NumOnBitsInCommon(const SparseBitVect& bv1,
                                const SparseBitVect& bv2);
-template SVectorXd ConvertToEigenVector(const SparseBitVect& bv1);
+//template SVectorXd ConvertToEigenVector(const SparseBitVect& bv1);
 template IntVect OnBitsInCommon(const SparseBitVect& bv1,
                                 const SparseBitVect& bv2);
 template IntVect OffBitsInCommon(const SparseBitVect& bv1,
@@ -806,7 +811,7 @@ template double OnBitSimilarity(const ExplicitBitVect& bv1,
                                 const ExplicitBitVect& bv2);
 template int NumBitsInCommon(const ExplicitBitVect& bv1,
                              const ExplicitBitVect& bv2);
-template VectorXd ConvertToEigenVector(const ExplicitBitVect& bv1);
+//template VectorXd ConvertToEigenVector(const ExplicitBitVect& bv1);
 template double AllBitSimilarity(const ExplicitBitVect& bv1,
                                  const ExplicitBitVect& bv2);
 template IntVect OnBitsInCommon(const ExplicitBitVect& bv1,

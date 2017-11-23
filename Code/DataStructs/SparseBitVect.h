@@ -16,7 +16,9 @@
 using std::set;
 #include <iterator>
 #include <algorithm>
-#include <Eigen/Sparse>
+//#include <Eigen/Sparse>
+#include "EigenTypes.h"
+
 
 typedef set<int> IntSet;
 typedef IntSet::iterator IntSetIter;
@@ -87,6 +89,8 @@ class SparseBitVect : public BitVect {
   bool operator!=(const SparseBitVect &o) const {
     return *dp_bits != *o.dp_bits;
   }
+
+  RDKit::SVectorXd convertToEigenVector() const;
 
  private:
   unsigned int d_size;
