@@ -3,37 +3,18 @@
 //
 
 #include <RDBoost/python.h>
-//#include <RDBoost/Wrap.h>
-
-//#include <RDGeneral/BoostStartInclude.h>
-//#include <boost/cstdint.hpp>
-//#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/types.h>
-//#include <RDGeneral/Invariant.h>
 #include <RDBoost/PySequenceHolder.h>
 
 #include <numpy/arrayobject.h>
-//#include <boost/python/numpy.hpp>
-//#include <numpy/npy_common.h>
-//#include <RDBoost/import_array.h>
-//#include <RDBoost/pyint_api.h>
-//#include <Eigen/SparseCore>
-
-//namespace python = boost::python;
+#include <boost/python/numpy.hpp>
 
 #include <DataStructs/EigenTypes.h>
 
 using namespace RDKit;
 
-//typedef int64_t WEVIndex;
-//typedef eigen::Matrix<double, eigen::Dynamic, 1> VectorXd;
-//typedef eigen::SparseMatrix<double, eigen::ColMajor, WEVIndex> SVectorXd;
-//typedef eigen::Map<VectorXd> MVectorXd;
-//typedef eigen::Map<SVectorXd> MSVectorXd;
-
-
-template <typename VectorType, typename MapType>
+template <typename VectorType>
 class VectorHelper {
 public:
   VectorHelper() {};
@@ -53,171 +34,211 @@ public:
     }
   }
 
-  static void SparseMap(SVectorXd& vec, python::object  innerIndices, python::object values, WEVIndex size) {
+  static void SparseMap(SVectorXd& vec, python::object  innerIndices, python::object values, WEVIndex nnz,
+                        WEVIndex size) {
     Py_Initialize();
     PyArrayObject *innerIndicesP = (PyArrayObject *)innerIndices.ptr();
     PyArrayObject *valuesP = (PyArrayObject *)values.ptr();
     WEVIndex *rowPos = (WEVIndex *) PyArray_DATA(innerIndicesP);
     double *valuesData = (double *) PyArray_DATA(valuesP);
     vec.resize(size, 1);
-    vec.reserve(size);
-    for (WEVIndex i=0; i<size; i++) {
+    vec.reserve(nnz);
+    for (WEVIndex i=0; i<nnz; i++) {
       vec.insert(rowPos[i],0) = valuesData[i];
     }
+    vec.makeCompressed();
   }
 
-/*
-  static MapType * Map(python::object toMap, WEVIndex m) {
-    Py_Initialize();
-    PyArrayObject *toMapP = (PyArrayObject *)toMap.ptr();
-    return new MapType((double *) PyArray_DATA(toMapP), m);
-//    static eigen::Map<VectorType> mapVec((double *) PyArray_DATA(toMap), m);
-//    return mapVec.derived();
-  }
-
-  //sparse mapping
-  // Super hack here :(
-  static MapType * SparseMap(WEVIndex size, WEVIndex nnz, python::object  outerIndices, python::object  innerIndices, python::object values) {
-    Py_Initialize();
-    PyArrayObject *outerIndicesP = (PyArrayObject *)outerIndices.ptr();
-    PyArrayObject *innerIndicesP = (PyArrayObject *)innerIndices.ptr();
-    PyArrayObject *valuesP = (PyArrayObject *)values.ptr();
-    return new MapType(size, 1, nnz,
-//    static eigen::Map<VectorType> mapVec(size, 1, nnz,
-                          (WEVIndex *) PyArray_DATA(outerIndicesP),
-                          (WEVIndex *) PyArray_DATA(innerIndicesP),
-                          (double *) PyArray_DATA(valuesP));
-//    return mapVec.derived();
-  }
-*/
-
-//  static void resize(VectorType& self, WEVIndex size) { self.resize(size, 0); }
-  static double dot(const MapType& self, const MapType& other){ return self.cwiseProduct(other).sum(); }
-  static VectorType cwiseMax(const MapType& self, const MapType& other){ return self.cwiseMax(other); }
-  static VectorType cwiseMin(const MapType& self, const MapType& other){ return self.cwiseMin(other); }
-  static double getVal(MapType& self, WEVIndex index) { return self.coeffRef(index, 0); }
-  static void setVal(MapType& self, WEVIndex index, double newVal) { self.coeffRef(index, 0) = newVal; }
-  static WEVIndex size(MapType& self) { return self.size();}
-  static WEVIndex rows(MapType& self) { return self.rows();}
-  static WEVIndex cols(MapType& self) { return self.cols();}
-  static double sum(MapType& self) { return self.sum(); }
-  static VectorType __neg__(const MapType& a){ return -a; };
-  static VectorType __add__(const MapType& a, const MapType& b){ return a+b; }
-  static VectorType __sub__(const MapType& a, const MapType& b){ return a-b; }
-  static VectorType __iadd__(MapType& a, const MapType& b){ a+=b; return a; };
-  static VectorType __isub__(MapType& a, const MapType& b){ a-=b; return a; };
-  static VectorType __mul(const MapType& a, const MapType& b){ return a.cwiseProduct(b); }
-  static VectorType __mulVec(const MapType& a, const VectorType& b){ return a.cwiseProduct(b); }
-  static VectorType __mulScalar(MapType& a, const double b){ return a*b;}
+  static WEVIndex resize(VectorType& self, WEVIndex new_size) {self.resize(new_size, 1); return self.size();}
+  static double dot(const VectorType& self, const VectorType& other){ return self.cwiseProduct(other).sum(); }
+  static VectorType cwiseMax(const VectorType& self, const VectorType& other){ return self.cwiseMax(other); }
+  static VectorType cwiseMin(const VectorType& self, const VectorType& other){ return self.cwiseMin(other); }
+  static double getVal(VectorType& self, WEVIndex index) { return self.coeffRef(index, 0); }
+  static void setVal(VectorType& self, WEVIndex index, double newVal) { self.coeffRef(index, 0) = newVal; }
+  static WEVIndex size(VectorType& self) { return self.size();}
+  static WEVIndex rows(VectorType& self) { return self.rows();}
+  static WEVIndex cols(VectorType& self) { return self.cols();}
+  static double sum(VectorType& self) { return self.sum(); }
+  static VectorType __neg__(const VectorType& a){ return -a; };
+  static VectorType __add__(const VectorType& a, const VectorType& b){ return a+b; }
+  static VectorType __sub__(const VectorType& a, const VectorType& b){ return a-b; }
+  static VectorType __iadd__(VectorType& a, const VectorType& b){ a+=b; return a; };
+  static VectorType __isub__(VectorType& a, const VectorType& b){ a-=b; return a; };
+  static VectorType __mul(const VectorType& a, const VectorType& b){ return a.cwiseProduct(b); }
+  static VectorType __mulVec(const VectorType& a, const VectorType& b){ return a.cwiseProduct(b); }
+  static VectorType __mulScalar(VectorType& a, const double b){ return a*b;}
 
 };
 
+namespace np = boost::python::numpy;
+template <typename VectorType>
+class WeightedTanimotoUFunc {
+public:
+  VectorType wv;
+  VectorType ref_fp;
+  double v1Sum;
 
-using namespace boost::python;
-template <typename VectorType, typename MapType>
+  WeightedTanimotoUFunc(VectorType fp, VectorType weightVec): wv(weightVec), ref_fp(fp){
+    v1Sum = 0.0;
+    v1Sum = ref_fp.cwiseProduct(wv).sum();
+  };
+
+  double getV1Sum() const {
+    return v1Sum;
+  }
+
+  void calcWeightedVectParams(const VectorType &ev2, double &v2Sum, double &andSum) {
+    v2Sum = andSum = 0.0;
+    v2Sum = ev2.cwiseProduct(wv).sum();
+    andSum = ref_fp.cwiseMin(ev2).cwiseProduct(wv).sum();
+  }
+
+  double WeightedTanimotoSimilarity(const VectorType &ev2) {
+    return WeightedTanimotoSimilarity1(ev2);
+  }
+
+  double WeightedTanimotoSimilarity1(const VectorType &ev2) {
+    double v2Sum = 0.0;
+    double andSum = 0.0;
+
+    calcWeightedVectParams(ev2, v2Sum, andSum);
+
+    double denom = v1Sum + v2Sum - andSum;
+    double sim;
+
+    if (fabs(denom) < 1e-6) {
+      sim = 0.0;
+    } else {
+      sim = andSum / denom;
+    }
+    // std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
+    return sim;
+  }
+
+  python::list WeightedTanimotoSimilarity(const python::list &in_arr ) {
+    return WeightedTanimotoSimilarity2(in_arr);
+  }
+
+  python::list WeightedTanimotoSimilarity2(const python::list &in_arr ) {
+    python::list res;
+    unsigned int nsev = python::extract<unsigned int>(in_arr.attr("__len__")());
+    for (unsigned int i = 0; i < nsev; ++i) {
+      double simVal;
+      const VectorType &ev2 = python::extract<VectorType>(in_arr[i])();
+      simVal = WeightedTanimotoSimilarity1(ev2);
+      res.append(simVal);
+    }
+    return res;
+//    np::dtype out_dtype = np::dtype::get_builtin<double>();
+//    np::ndarray out_array = np::zeros(in_arr.get_nd(), in_arr.get_shape(), out_dtype);
+//    np::multi_iter iter = make_multi_iter(in_arr, out_array);
+//    while (iter.not_done())
+//    {
+////      VectorType * argument = reinterpret_cast<VectorType*>(iter.get_data(0));
+//      VectorType * argument = reinterpret_cast<python::object*>(iter.get_data(0));
+//      double * result = reinterpret_cast<double *>(iter.get_data(1));
+//      *result = WeightedTanimotoSimilarity1(*argument);
+//      iter.next();
+//    }
+//    return out_array.scalarize();
+  }
+
+};
+
+template <typename VectorType>
 static void wrapOne(const char *className) {
 
-  class_<MapType, boost::shared_ptr<MapType> >(className, "Eigen dense vectorXd", no_init)
-//  class_<VectorType>(className, "Eigen dense vectorXd", no_init)
-//      .def("resize", &VectorHelper<MVectorType, VectorType>::resize, python::arg("size"))
-      .def("__len__", &VectorHelper<VectorType, MapType>::size)
-      .def("dot", &VectorHelper<VectorType, MapType>::dot, python::arg("other"), "Dot product with *other*.")
-      .def("__setitem__", &VectorHelper<VectorType, MapType>::setVal, python::arg("index"), python::arg("newVal"),
+  python::class_<VectorType, boost::shared_ptr<VectorType> >(className, "Eigen sparse vectorXd", python::no_init)
+      .def("resize", &VectorHelper<VectorType>::resize, python::arg("size"))
+      .def("__len__", &VectorHelper<VectorType>::size)
+      .def("dot", &VectorHelper<VectorType>::dot, python::arg("other"), "Dot product with *other*.")
+      .def("__setitem__", &VectorHelper<VectorType>::setVal, python::arg("index"), python::arg("newVal"),
            "Set the value at a specified location")
-      .def("__getitem__", &VectorHelper<VectorType, MapType>::getVal, python::arg("index"),
+      .def("__getitem__", &VectorHelper<VectorType>::getVal, python::arg("index"),
            "Get the value at a specified location")
-      .def("sum", &VectorHelper<VectorType, MapType>::sum, "Sum of all elements")
-      .def("size", &VectorHelper<VectorType, MapType>::size, "Size")
-      .def("rows", &VectorHelper<VectorType, MapType>::rows, "Rows")
-      .def("cols", &VectorHelper<VectorType, MapType>::cols, "Cols")
-      .def("cwiseMax", &VectorHelper<VectorType, MapType>::cwiseMax, python::arg("other"))
-      .def("cwiseMin", &VectorHelper<VectorType, MapType>::cwiseMin, python::arg("other"))
-      .def("__neg__", &VectorHelper<VectorType, MapType>::__neg__)
-      .def("__add__", &VectorHelper<VectorType, MapType>::__add__)
+      .def("sum", &VectorHelper<VectorType>::sum, "Sum of all elements")
+      .def("size", &VectorHelper<VectorType>::size, "Size")
+      .def("rows", &VectorHelper<VectorType>::rows, "Rows")
+      .def("cols", &VectorHelper<VectorType>::cols, "Cols")
+      .def("cwiseMax", &VectorHelper<VectorType>::cwiseMax, python::arg("other"))
+      .def("cwiseMin", &VectorHelper<VectorType>::cwiseMin, python::arg("other"))
+      .def("__neg__", &VectorHelper<VectorType>::__neg__)
+      .def("__add__", &VectorHelper<VectorType>::__add__)
 //      .def("__iadd__", &VectorHelper<VectorType, MapType>::__iadd__)
-      .def("__sub__", &VectorHelper<VectorType, MapType>::__sub__)
+      .def("__sub__", &VectorHelper<VectorType>::__sub__)
 //      .def("__isub__", &VectorHelper<VectorType, MapType>::__isub__)
-      .def("__mul__", &VectorHelper<VectorType, MapType>::__mul)
-      .def("__mul__", &VectorHelper<VectorType, MapType>::__mulScalar)
-      .def("__mul__", &VectorHelper<VectorType, MapType>::__mulVec)
+      .def("__mul__", &VectorHelper<VectorType>::__mul)
+      .def("__mul__", &VectorHelper<VectorType>::__mulScalar)
+      .def("__mul__", &VectorHelper<VectorType>::__mulVec)
       ;
 }
 
-template <typename VectorType, typename MapType>
+
+template <typename VectorType>
+static void wrapWeightedTanimotoUFunc(const char *className) {
+  Py_Initialize();
+  np::initialize();
+  python::class_<WeightedTanimotoUFunc<VectorType>,
+      boost::shared_ptr<WeightedTanimotoUFunc<VectorType> > >
+      (className,"WeightedTanimotoUFunc", python::init<VectorType, VectorType>())
+      .def("__call__", &WeightedTanimotoUFunc<VectorType>::WeightedTanimotoSimilarity1, (python::args("svec")))
+      .def("__call__", &WeightedTanimotoUFunc<VectorType>::WeightedTanimotoSimilarity2, (python::args("ndarray")))
+      .def("getV1Sum", &WeightedTanimotoUFunc<VectorType>::getV1Sum)
+      ;
+}
+
+template <typename VectorType>
 static void wrapMap(const char *className){};
 
-//typename boost::enable_if<boost::is_same<MapType, MVectorXd>, VectorType>::type
 template <>
-void wrapMap<VectorXd, MVectorXd>(const char *className) {
+void wrapMap<VectorXd>(const char *className) {
 
   char helperName[80];
 
   strcpy(helperName, className);
   strcat(helperName, "Helper");
 
-  class_<VectorHelper<VectorXd, MVectorXd> >(helperName)
-      .def("Map", &VectorHelper<VectorXd, MVectorXd>::Map,
+  python::class_<VectorHelper<VectorXd> >(helperName)
+      .def("Map", &VectorHelper<VectorXd>::Map,
            (python::args("vec"), python::args("toMap"), python::args("size")))
       .staticmethod("Map")
-      .def("Create", &VectorHelper<VectorXd, MVectorXd>::Create,
+      .def("Create", &VectorHelper<VectorXd>::Create,
            python::return_value_policy<python::manage_new_object>())
       .staticmethod("Create")
       ;
-
-/*
-  class_<VectorHelper<VectorXd, MVectorXd> >(helperName)
-      .def("Map", &VectorHelper<VectorXd, MVectorXd>::Map,
-           (python::args("toMap"), python::args("m")),
-           python::return_value_policy<python::manage_new_object>())
-      .staticmethod("Map")
-      ;
-*/
-//  wrapOne<VectorType>(className);
 }
 
-//template <typename VectorType, typename MapType>
-//typename boost::enable_if<boost::is_same<MapType, MSVectorXd>, VectorType>::type
 template <>
-void wrapMap<SVectorXd, MSVectorXd>(const char *className) {
+void wrapMap<SVectorXd>(const char *className) {
 
   char helperName[80];
 
   strcpy(helperName, className);
   strcat(helperName, "Helper");
 
-  class_<VectorHelper<SVectorXd, MSVectorXd> >(helperName)
-      .def("Map", &VectorHelper<SVectorXd, MSVectorXd>::SparseMap,
+  python::class_<VectorHelper<SVectorXd> >(helperName)
+      .def("Map", &VectorHelper<SVectorXd>::SparseMap,
            (python::args("vec"), python::args("innerIndices"),
                python::args("values"),
+               python::args("nnz"),
                python::args("size")))
       .staticmethod("Map")
-      .def("Create", &VectorHelper<SVectorXd, MSVectorXd>::Create,
+      .def("Create", &VectorHelper<SVectorXd>::Create,
            python::return_value_policy<python::manage_new_object>())
       .staticmethod("Create")
       ;
-/*
-  class_<VectorHelper<SVectorXd, MSVectorXd> >(helperName)
-      .def("Map", &VectorHelper<SVectorXd, MSVectorXd>::SparseMap,
-           (python::args("size"), python::args("nnz"),
-               python::args("outerIndices"),
-               python::args("innerIndices"),
-               python::args("values")),
-           python::return_value_policy<python::manage_new_object>(),
-           "Must be called with: total size, nnz, column position array ([0,size]) as int64, row position array as in64 and values as double")
-      .staticmethod("Map")
-      ;
-*/
-//  wrapOne<VectorType>(className);
 }
 
 struct Eigen_wrapper {
   static void wrap() {
-    wrapMap<VectorXd, MVectorXd>("MVectorXd");
-    wrapMap<SVectorXd, MSVectorXd>("MSVectorXd");
-    wrapOne<VectorXd, VectorXd>("VectorXd");
-    wrapOne<VectorXd, MVectorXd>("MVectorXd");
-    wrapOne<SVectorXd, SVectorXd>("SVectorXd");
-    wrapOne<SVectorXd, MSVectorXd>("MSVectorXd");
+    wrapMap<VectorXd>("MVectorXd");
+    wrapMap<SVectorXd>("MSVectorXd");
+    wrapOne<VectorXd>("VectorXd");
+//    wrapOne<VectorXd, MVectorXd>("MVectorXd");
+    wrapOne<SVectorXd>("SVectorXd");
+//    wrapOne<SVectorXd, MSVectorXd>("MSVectorXd");
+    wrapWeightedTanimotoUFunc<VectorXd>("WTCVectorXd");
+    wrapWeightedTanimotoUFunc<SVectorXd>("WTCSVectorXd");
   }
 };
 

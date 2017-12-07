@@ -353,19 +353,36 @@ class SparseIntVect {
   }
 
   SVectorXd convertToEigenVector() const {
-    typename StorageType::const_iterator iter;
-    WEVIndex size  = (WEVIndex) d_data.size();
-    SVectorXd ev(size, 1);
+    return convertToEigenVector1();
+  }
 
-    ev.reserve(size);
+  SVectorXd convertToEigenVector(const WEVIndex rows) const {
+    return convertToEigenVector2(rows);
+  }
+
+  SVectorXd convertToEigenVector1() const {
+    typename StorageType::const_iterator iter;
+    IndexType maxRow = 0;
     for (iter = d_data.begin(); iter != d_data.end(); ++iter) {
-      ev.insert(iter->first, 0) = iter->second;
+      maxRow  = (iter->first > maxRow) ? iter->first : maxRow;
     }
 
+    return convertToEigenVector2((WEVIndex) (maxRow+1));
+  }
+
+  SVectorXd convertToEigenVector2(const WEVIndex rows) const {
+    typename StorageType::const_iterator iter;
+    WEVIndex size  = (WEVIndex) d_data.size();
+    SVectorXd ev(rows, 1);
+    ev.reserve(size);
+    for (iter = d_data.begin(); iter != d_data.end(); ++iter) {
+      ev.insert(iter->first,0) = iter->second;
+    }
+    ev.makeCompressed();
     return ev;
   }
 
- private:
+  private:
   IndexType d_length;
   StorageType d_data;
 

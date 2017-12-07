@@ -161,7 +161,8 @@ struct sparseIntVec_wrapper {
         .def("GetNonzeroElements", &pyGetNonzeroElements<IndexType>,
              "returns a dictionary of the nonzero elements")
         .def_pickle(siv_pickle_suite<IndexType>())
-        .def("convertToEigenVector", &SparseIntVect<IndexType>::convertToEigenVector)
+        .def("convertToEigenVector", &SparseIntVect<IndexType>::convertToEigenVector1)
+        .def("convertToEigenVector", &SparseIntVect<IndexType>::convertToEigenVector2, (python::args("rows")))
         ;
 
     python::def("calcWeightedVectParams", &calcWeightedVectParams<IndexType>,

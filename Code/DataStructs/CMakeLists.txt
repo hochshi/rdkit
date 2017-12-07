@@ -8,6 +8,10 @@ rdkit_library(DataStructs
               DiscreteValueVect.cpp FPBReader.cpp MultiFPBReader.cpp
               LINK_LIBRARIES RDGeneral)
 
+#target_link_libraries(DataStructs boost_python boost_numpy)
+#target_link_libraries(DataStructs boost_numpy)
+find_package(Boost 1.39.0 COMPONENTS numpy REQUIRED)
+
 rdkit_headers(base64.h
               BitOps.h
               BitVect.h
